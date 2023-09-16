@@ -4,4 +4,4 @@ A dashboard synced with Google Calendar displaying the date, time, and the day's
 - NodeMCU ESP8266
 - 3.5 inch ILI9481 display
 # Credits
-The Arduino_JSON library and TFT_eSPI library were used extensively in this project. 
+The [TFT_eSPI](https://github.com/Bodmer/TFT_eSPI) library and [Arduino_JSON](https://github.com/arduino-libraries/Arduino_JSON) library were used extensively in this project. 
