@@ -4,15 +4,19 @@
 #include <WiFiClientSecureBearSSL.h>
 #include <SPI.h>
 #include <TFT_eSPI.h>
-#include <EEPROM.h>
 #include <time.h>
-const char * WIFI_SSID = "";
-const char * WIFI_PASS = "";
-const char * AUTHENTICATION_LINK = "";
-const char * REQUEST_LINK = "";
-const char * GEOLOCATION_LINK = "";
-const char * REFRESH_LINK = "";
+#include <WiFiManager.h>
+#include <Preferences.h>
+const String AUTHENTICATION_LINK = "";
+const String API_KEY = "";
+const String REQUEST_LINK = "https://www.googleapis.com/calendar/v3/calendars/primary/events?key=" + API_KEY;
+const String GEOLOCATION_LINK = "https://worldtimeapi.org/api/ip";
+const String REFRESH_LINK = "https://oauth2.googleapis.com/token";
+const String CLIENT_ID = "";
+const String CLIENT_SECRET = "";
 TFT_eSPI tft = TFT_eSPI();
+WiFiManager wifiManager;
+Preferences prefs;
 String access_token;
 String refresh_token;
 String timestamp;
@@ -26,7 +30,8 @@ String getTime();
 String toFormatString(time_t timeNow);
 time_t getTimeUnix();
 int getRawOffset();
+void refreshTime();
 String refresh(String &refresh_token);
-String readStr(int addr);
-void putStr(int addr, String &str);
 void login();
+void configModeCallback(WiFiManager *myWiFiManager);
+void initTFT();
