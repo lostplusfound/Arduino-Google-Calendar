@@ -10,44 +10,23 @@ void setup() {
   timestamp.reserve(32);
   date.reserve(32);
   Serial.begin(115200);
-  EEPROM.begin(4096);
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(WIFI_SSID, WIFI_PASS);
-  while (WiFi.status() != WL_CONNECTED) { 
-    yield();
-  }
-  Serial.println(WiFi.localIP());
-  delay(250);
-  while(tft.getRotation() != 1) {
-    yield();
-    tft.init();
-    tft.setRotation(1);
-    tft.setCursor(0, 0, 2);
-    tft.setTextColor(TFT_BLACK, TFT_WHITE);  
-  }
+  prefs.begin("calendar");
+  initTFT();
+  wifiManager.setDebugOutput(false);
+  wifiManager.setAPCallback(configModeCallback);
+  wifiManager.autoConnect("Calendar", "calendar123");
   login();
-  timeNow = getTimeUnix();
-  while(timeNow == -1) {
-    delay(100);
-    timeNow = getTimeUnix();
-  }
-  rawOffset = getRawOffset();
-  while(rawOffset == -1) {
-    delay(100);
-    rawOffset = getRawOffset();
-  }
-  timeNow += rawOffset;
   prevMillis = millis() + 30000;
 }
 
 void loop() {
   unsigned long nowMillis = millis();
   JSONVar token;
-  if(nowMillis - prevMillis > 30000) { // get events, print to screen
+  if(nowMillis - prevMillis > 30000) { // refresh every 30s and print to screen
+    initTFT();
     count++;
     timeNow += 30;
     timestamp = toRFC(timeNow, rawOffset);
-    Serial.println(timestamp);
     token = JSON.parse(getRequest(access_token, timestamp));
     while(!token.hasOwnProperty("items")) {
       login();
@@ -61,33 +40,40 @@ void loop() {
     tft.println(F("Today's events: "));
     for(int i = 0; i < token["items"].length(); i++) {
       date = String((const char *) token["items"][i]["start"]["dateTime"]);
-      Serial.println(token["items"][i]["summary"]);
       if(timestamp.substring(0, 10) == date.substring(0, 10)) {
         tft.print((const char *) token["items"][i]["summary"]);
         tft.print(F(" at: "));
         tft.println(date.substring(11, 16));
       }
     }
-    Serial.println(ESP.getFreeHeap());
     prevMillis = nowMillis;
   }
-  if(count >= 20) { // sync time every 10 min
-    timeNow = getTimeUnix();
-    while(timeNow == -1) {
-      delay(100);
-      timeNow = getTimeUnix();
-    }
-    rawOffset = getRawOffset();
-    while(rawOffset == -1) {
-      delay(100);
-      rawOffset = getRawOffset();
-    }
-    timeNow += rawOffset;
+  if(count >= 20) { // refresh time every 10 min
+    refreshTime();
     count = 0;
   }
-  if(digitalRead(D3) == 0) { // detect if touchscreen has been pressed
+  if(digitalRead(D3) == 0) { // toggle backlight if touchscreen was pressed
     backlight = !backlight;
     digitalWrite(D2, backlight);
     delay(500);
   }
+}
+
+void configModeCallback (WiFiManager *myWiFiManager) {
+  initTFT();
+  tft.fillScreen(TFT_WHITE);
+  tft.setCursor(0, 0, 2);
+  tft.setTextSize(4);
+  tft.println(F("No WiFi!"));
+  tft.setTextSize(2);
+  tft.println(F("1) Connect to Wifi network \"Calendar\" with password \"calendar123\""));
+  tft.println(F("2) Follow prompt to log in to enter WiFi network credentials"));
+  tft.println(F("If you are not asked to log in, open the IP 192.168.4.1 in a browser"));
+}
+
+void initTFT() {
+  tft.init();
+  tft.setRotation(1);
+  tft.setCursor(0, 0, 2);
+  tft.setTextColor(TFT_BLACK, TFT_WHITE);  
 }
