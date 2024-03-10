@@ -59,3 +59,17 @@ int getRawOffset() {
   }
   return -1;
 }
+
+void refreshTime() {
+  timeNow = getTimeUnix();
+  while(timeNow == -1) {
+    delay(100);
+    timeNow = getTimeUnix();
+  }
+  rawOffset = getRawOffset();
+  while(rawOffset == -1) {
+    delay(100);
+    rawOffset = getRawOffset();
+  }
+  timeNow += rawOffset;
+}
