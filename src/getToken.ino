@@ -16,7 +16,7 @@ String refresh(String &refresh_token) {
   client.setInsecure();
   http.begin(client, REFRESH_LINK);
   http.addHeader("Content-Type", "application/x-www-form-urlencoded");
-  int code = http.POST("" + refresh_token);
+  int code = http.POST("client_id=" + CLIENT_ID + "&client_secret=" + CLIENT_SECRET + "&grant_type=refresh_token&refresh_token=" + refresh_token);
   if(code > 0) {
     JSONVar token = JSON.parse(http.getString());
     if(token.hasOwnProperty("access_token")) {
